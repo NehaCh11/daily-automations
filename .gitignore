@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+Thumbs.db
+
+# Your real dates. The committed reminders.json is a sample; keep anything
+# personal in this file, which never leaves your machine.
+reminders.local.json
+life-admin/reminders.local.json

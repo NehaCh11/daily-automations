@@ -1,0 +1,70 @@
+name: life-admin reminders
+
+on:
+  schedule:
+    # 06:15 UTC every day. GitHub's shared runners can start a cron job late,
+    # so treat the time as "some time after 06:15".
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      today:
+        description: "Pretend today is this YYYY-MM-DD (blank = the real date)"
+        required: false
+        default: ""
+      open_issues:
+        description: "Open reminder issues"
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: life-admin
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Check the date logic
+        run: python -m unittest discover -s life-admin -v
+
+      - name: Work out today's reminders
+        env:
+          # Unbuffered, or Python flushes the whole log at the end.
+          PYTHONUNBUFFERED: "1"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: your real dates as JSON, so they never sit in the repo.
+          REMINDERS_JSON: ${{ secrets.REMINDERS_JSON }}
+        run: |
+          args=""
+          if [ -n "${{ inputs.today }}" ]; then
+            args="$args --today ${{ inputs.today }}"
+          fi
+          if [ "${{ inputs.open_issues }}" = "false" ]; then
+            args="$args --no-issues"
+          fi
+          python life-admin/remind.py $args
+
+      - name: Commit the agenda
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add life-admin/AGENDA.md life-admin/state
+          if git diff --staged --quiet; then
+            echo "Nothing changed."
+          else
+            git commit -m "life-admin: agenda $(date -u +%Y-%m-%d)"
+            git push
+          fi

@@ -1,0 +1,69 @@
+{
+  "_comment": "Sample list, committed so the tool runs out of the box. Keep your real dates in reminders.local.json (gitignored) or in a REMINDERS_JSON repo secret.",
+  "warn_default": [30, 14, 7, 1, 0],
+  "reminders": [
+    {
+      "label": "Rent transfer",
+      "date": "2026-01-01",
+      "every": "monthly",
+      "category": "money",
+      "warn": [7, 2, 0],
+      "notes": "Standing order, but check it actually left the account."
+    },
+    {
+      "label": "Recycling collection",
+      "date": "2026-11-04",
+      "every": "weekly",
+      "category": "house",
+      "warn": [1, 0],
+      "notes": "Bins out the night before."
+    },
+    {
+      "label": "Laptop warranty ends",
+      "date": "2026-12-09",
+      "every": "none",
+      "category": "kit",
+      "warn": [30, 14, 3, 0],
+      "notes": "Raise the keyboard fault before this date or pay for it."
+    },
+    {
+      "label": "Domain renewal: example.dev",
+      "date": "2026-12-22",
+      "every": "yearly",
+      "category": "subscriptions",
+      "warn": [30, 7, 1, 0]
+    },
+    {
+      "label": "Gym membership renews",
+      "date": "2026-03-18",
+      "every": "monthly",
+      "category": "subscriptions",
+      "warn": [7, 1],
+      "notes": "Cancel by the 11th if it is still going unused."
+    },
+    {
+      "label": "Visa paperwork",
+      "date": "2027-01-15",
+      "every": "none",
+      "category": "documents",
+      "redact": true,
+      "warn": [60, 30, 14, 7, 1, 0],
+      "notes": "Details stay out of the public agenda; category only."
+    },
+    {
+      "label": "Dentist checkup",
+      "date": "2027-05-04",
+      "every": "yearly",
+      "category": "health",
+      "warn": [30, 7]
+    },
+    {
+      "label": "Passport expires",
+      "date": "2028-04-18",
+      "every": "none",
+      "category": "documents",
+      "warn": [180, 90, 30, 7],
+      "notes": "Renew at nine months left; some countries want six months of validity."
+    }
+  ]
+}
