@@ -2,9 +2,11 @@ name: life-admin reminders
 
 on:
   schedule:
-    # 06:15 UTC every day. GitHub's shared runners can start a cron job late,
-    # so treat the time as "some time after 06:15".
-    - cron: "15 6 * * *"
+    # 06:38 UTC every day. Deliberately not a round quarter: GitHub queues
+    # scheduled jobs globally, the popular slots are the most congested, and a
+    # 07:00 schedule in the sibling repo was dropped outright on its first
+    # night rather than merely delayed.
+    - cron: "38 6 * * *"
   workflow_dispatch:
     inputs:
       today:

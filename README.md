@@ -13,7 +13,7 @@ rather than topic: research tooling follows the thesis, these follow me.
 
 | Tool | What it does | Runs on |
 | --- | --- | --- |
-| [life-admin](life-admin/) | Watches a list of dates that expire, renew or fall due, and opens a GitHub issue when one enters its warning window | GitHub Actions, daily 06:15 UTC |
+| [life-admin](life-admin/) | Watches a list of dates that expire, renew or fall due, and opens a GitHub issue when one enters its warning window | GitHub Actions, daily 06:38 UTC |
 
 ## How these are built
 
