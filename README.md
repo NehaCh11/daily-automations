@@ -55,8 +55,11 @@ nothing.
 
 ## A note on personal data
 
-This repo is public, so nothing personal is committed to it. Tools that read a
-list of your own details take it from a file that is gitignored, or from a
-repository secret, and the sample committed here is sample data. `life-admin`
-also supports marking an entry as redacted, so it still tracks the date but
-writes only the category into anything public.
+This repo is public, so nothing personal is committed to it, and the committed
+configuration is sample data. The thing worth saying out loud: on a public repo
+a secret hides the input, not the output. An automation that opens issues or
+commits a report publishes whatever it has to say, whoever told it. So tools
+here read personal lists from a gitignored file or a repository secret, support
+marking an entry as redacted so only its category reaches anything public, and
+where I actually run one on my own data it runs from a private copy. The public
+one keeps the sample.

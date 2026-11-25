@@ -64,39 +64,45 @@ Where the list is read from, first match wins:
 3. `reminders.local.json`, which is gitignored. This is the one to use locally.
 4. `reminders.json`, the committed sample.
 
-## Keeping your real list private
+## Running it on your own dates
 
-This repo is public, so your own dates do not belong in it. Keep them in
-`reminders.local.json`, which is gitignored, and hand the same JSON to the
-scheduled job as a repository secret. The secret is write-only once set: the
-workflow can read it, nobody browsing the repo can.
+The list committed here is sample data. Where your own goes depends on one
+thing that is easy to get wrong: **on a public repo the notifications are
+public too.** A `REMINDERS_JSON` secret keeps your list out of the repo, but the
+issues the job opens and the agenda it commits are still world-readable, so
+`[reminder] Passport expires - in 30 days` would be on show. The secret hides
+the list, not the reminders.
+
+So, in order of how private you need this to be:
+
+**A private copy, which is what I run.** Copy `remind.py` and the workflow into
+a private repo, put your real list in its `reminders.json`, and let it commit
+its own agenda and open its own issues. Everything stays private, nothing needs
+a secret, and the two repos keep separate histories so there is no branch to
+merge and no way for your dates to end up here.
+
+**This repo, with every entry redacted.** `"redact": true` keeps the label out
+of the agenda, the issue title and the state file key, so an issue reads
+`documents item (details kept private) - in 30 days`. The date and the category
+are still public.
+
+**Locally only.** `reminders.local.json` is gitignored and wins over the
+committed sample, so `python life-admin/remind.py` on your own machine writes an
+agenda from your dates and, with no `GITHUB_TOKEN` around, opens nothing.
+
+The secret still earns its place for a private list on a private runner, or any
+setup where you want the dates out of the git history:
 
 ```bash
-# 1. edit your own list
-#    life-admin/reminders.local.json
-
-# 2. check it parses before you upload something you cannot see run
-python life-admin/remind.py --check
-
-# 3. upload it, overwriting whatever was there
-gh secret set REMINDERS_JSON --repo NehaCh11/daily-automations \
-  --body "$(cat life-admin/reminders.local.json)"
+python life-admin/remind.py --check     # does it parse, and what dates does it work out
+gh secret set REMINDERS_JSON --repo OWNER/REPO --body "$(cat life-admin/reminders.local.json)"
 ```
-
-On Windows PowerShell, step 3 is:
 
 ```powershell
-gh secret set REMINDERS_JSON --repo NehaCh11/daily-automations --body (Get-Content life-admin/reminders.local.json -Raw)
+gh secret set REMINDERS_JSON --repo OWNER/REPO --body (Get-Content life-admin/reminders.local.json -Raw)
 ```
 
-From then on the scheduled run reads your list instead of the sample, and the
-agenda it commits shows your dates. Anything you would rather not publish even
-there gets `"redact": true`, which leaves the date tracked but the label out of
-the agenda, the issue title and the state file. If you would rather commit
-nothing at all, drop the `Commit the agenda` step from the workflow: the issues
-still arrive.
-
-To go back to the sample, `gh secret delete REMINDERS_JSON`.
+To go back to the committed list, `gh secret delete REMINDERS_JSON`.
 
 ## Run it
 
