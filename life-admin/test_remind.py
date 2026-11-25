@@ -9,7 +9,12 @@ Those cases are here. Run with: python -m unittest discover life-admin
 Nothing here touches the network or the state file on disk.
 """
 
+import contextlib
+import io
+import json
+import os
 import sys
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
@@ -201,6 +206,70 @@ class Rendering(unittest.TestCase):
         self.assertEqual(remind.when_phrase(9), "in 9 days")
         self.assertEqual(remind.when_phrase(-1), "overdue since yesterday")
         self.assertEqual(remind.when_phrase(-4), "overdue by 4 days")
+
+
+class ConfigSources(unittest.TestCase):
+    """Where the list comes from, which is how real dates stay out of the repo."""
+
+    def setUp(self):
+        self.addCleanup(os.environ.pop, "REMINDERS_JSON", None)
+
+    def test_the_environment_variable_beats_the_committed_sample(self):
+        os.environ["REMINDERS_JSON"] = json.dumps(
+            {"reminders": [{"label": "From the secret", "date": "2026-12-01"}]}
+        )
+        config, source = remind.load_config(None)
+        self.assertIn("REMINDERS_JSON", source)
+        self.assertEqual(config["reminders"][0]["label"], "From the secret")
+
+    def test_an_empty_environment_variable_falls_through_to_a_file(self):
+        os.environ["REMINDERS_JSON"] = "   "
+        _, source = remind.load_config(None)
+        self.assertNotIn("REMINDERS_JSON", source)
+
+    def test_broken_json_in_the_secret_fails_loudly(self):
+        os.environ["REMINDERS_JSON"] = "{not json"
+        with self.assertRaises(SystemExit) as caught:
+            remind.load_config(None)
+        self.assertIn("REMINDERS_JSON", str(caught.exception))
+
+
+class CheckFlag(unittest.TestCase):
+    """--check is what you run before uploading a list you cannot see run."""
+
+    def run_check(self, config):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "reminders.json"
+            path.write_text(json.dumps(config), encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                code = remind.main(["--config", str(path), "--check", "--today", "2026-11-25"])
+            return code, out.getvalue()
+
+    def test_a_clean_list_passes_and_shows_each_due_date(self):
+        code, out = self.run_check(
+            {"reminders": [{"label": "Passport expires", "date": "2028-04-18", "warn": [180, 30]}]}
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("2028-04-18", out)
+        self.assertIn("warns at 180, 30", out)
+        self.assertIn("every entry reads cleanly", out)
+
+    def test_a_broken_entry_fails_the_check(self):
+        code, out = self.run_check(
+            {"reminders": [{"label": "Fine", "date": "2026-12-01"}, {"label": "Broken", "date": "nope"}]}
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("could not be read", out)
+
+    def test_check_writes_nothing(self):
+        before = remind.STATE_PATH.read_bytes() if remind.STATE_PATH.exists() else None
+        agenda_before = remind.AGENDA_PATH.read_bytes() if remind.AGENDA_PATH.exists() else None
+        self.run_check({"reminders": [{"label": "Fine", "date": "2026-12-01"}]})
+        after = remind.STATE_PATH.read_bytes() if remind.STATE_PATH.exists() else None
+        agenda_after = remind.AGENDA_PATH.read_bytes() if remind.AGENDA_PATH.exists() else None
+        self.assertEqual(before, after)
+        self.assertEqual(agenda_before, agenda_after)
 
 
 if __name__ == "__main__":

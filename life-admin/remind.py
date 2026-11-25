@@ -379,6 +379,11 @@ def parse_args(argv=None):
     parser.add_argument("--today", help="pretend today is this YYYY-MM-DD (for testing)")
     parser.add_argument("--dry-run", action="store_true", help="print what would happen, write nothing")
     parser.add_argument("--no-issues", action="store_true", help="write the agenda, open no issues")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="read the list, report anything unreadable, exit non-zero if there is. Writes nothing.",
+    )
     return parser.parse_args(argv)
 
 
@@ -388,11 +393,28 @@ def main(argv=None):
 
     config, source = load_config(args.config)
     reminders, problems = resolve(config, today)
-    state = load_state()
 
     print("life-admin {} - {} reminder(s) from {}".format(today.isoformat(), len(reminders), source))
     for problem in problems:
         print("! unreadable entry - {}".format(problem), file=sys.stderr)
+
+    if args.check:
+        for rem in reminders:
+            print(
+                "  ok  {}  {}  ({}, warns at {})".format(
+                    rem.due.isoformat(),
+                    rem.display,
+                    rem.repeat_note,
+                    ", ".join(str(day) for day in rem.warn),
+                )
+            )
+        if problems:
+            print("{} entry(ies) could not be read; fix them before uploading".format(len(problems)))
+            return 1
+        print("every entry reads cleanly")
+        return 0
+
+    state = load_state()
 
     announcements = due_announcements(reminders, state)
     for rem, step in announcements:
