@@ -101,6 +101,11 @@ announced:
 Delete a line to be told about it again. Occurrences older than 400 days are
 dropped on the next run, so the file stays short.
 
+A redacted item is keyed by its category and a short digest of its label
+(`documents-6c65933a@2027-01-15`) rather than by the label, so the state file
+gives nothing away either. The digest is stable, so it keeps tracking the same
+item between runs.
+
 ## When things go wrong
 
 - A malformed entry is skipped, named in the run log and listed at the bottom of

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import hashlib
 import json
 import os
 import sys
@@ -174,7 +175,19 @@ class Reminder(object):
         self.warn = sorted(set(int(day) for day in warn), reverse=True)
         self.due = next_occurrence(self.anchor, self.every, today)
         self.days_until = (self.due - today).days
-        self.key = "{}@{}".format(_slug(self.label), self.due.isoformat())
+        self.key = "{}@{}".format(self._key_name(), self.due.isoformat())
+
+    def _key_name(self):
+        """The name this item goes by in state/notified.json, which is public.
+
+        A redacted item must not spell its label out in the state file either,
+        so it is keyed by category and a short digest: stable between runs,
+        and not a label.
+        """
+        if self.redact:
+            digest = hashlib.sha1(self.label.encode("utf-8")).hexdigest()[:8]
+            return "{}-{}".format(_slug(self.category), digest)
+        return _slug(self.label)
 
     @property
     def display(self):

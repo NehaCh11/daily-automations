@@ -161,6 +161,16 @@ class Rendering(unittest.TestCase):
         self.assertNotIn("Visa", remind.issue_title(rem))
         self.assertNotIn("Visa", remind.issue_body(rem, 30))
 
+    def test_a_redacted_label_stays_out_of_the_state_key_too(self):
+        item = {"label": "Visa paperwork", "date": "2027-01-15", "category": "documents", "redact": True}
+        rem = remind.Reminder(item, 0, date(2026, 11, 25), remind.WARN_DEFAULT)
+        self.assertNotIn("visa", rem.key)
+        self.assertNotIn("paperwork", rem.key)
+        self.assertTrue(rem.key.startswith("documents-"))
+        # Same item, later run: the key has to be the same or it re-announces.
+        again = remind.Reminder(item, 0, date(2026, 12, 1), remind.WARN_DEFAULT)
+        self.assertEqual(rem.key, again.key)
+
     def test_notes_reach_the_issue_body_when_nothing_is_redacted(self):
         item = {"label": "Laptop warranty", "date": "2026-12-09", "notes": "Raise the keyboard fault."}
         rem = remind.Reminder(item, 0, date(2026, 11, 25), remind.WARN_DEFAULT)

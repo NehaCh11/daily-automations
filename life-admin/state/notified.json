@@ -1,5 +1,8 @@
 {
   "announced": {
+    "documents-6c65933a@2027-01-15": [
+      60
+    ],
     "domain-renewal-example-dev@2026-12-22": [
       30
     ],
@@ -13,9 +16,6 @@
     ],
     "rent-transfer@2026-12-01": [
       7
-    ],
-    "visa-paperwork@2027-01-15": [
-      60
     ]
   },
   "last_run": "2026-11-25T06:47:32Z"
