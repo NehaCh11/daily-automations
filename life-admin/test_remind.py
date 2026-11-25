@@ -196,6 +196,15 @@ class Rendering(unittest.TestCase):
         self.assertIn("## Overdue", agenda)
         self.assertIn("## Further out", agenda)
 
+    def test_the_overdue_table_says_how_late_not_overdue_by_how_late(self):
+        config = {"reminders": [{"label": "Late thing", "date": "2026-11-01"}]}
+        reminders, _ = remind.resolve(config, date(2026, 11, 25))
+        agenda = remind.render_agenda(reminders, [], date(2026, 11, 25), "test")
+        self.assertIn("| 24 days |", agenda)
+        self.assertNotIn("| overdue by 24 days |", agenda)
+        # The issue itself still reads as a sentence.
+        self.assertIn("overdue by 24 days", remind.issue_title(reminders[0]))
+
     def test_an_empty_window_still_renders_a_table(self):
         agenda = remind.render_agenda([], [], date(2026, 11, 25), "test")
         self.assertIn("_nothing due_", agenda)

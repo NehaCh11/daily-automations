@@ -245,10 +245,10 @@ def due_announcements(reminders, state):
 
 # -------------------------------------------------------------------- output
 
-def _row(rem):
-    return "| {} | {} | {} | {} |".format(
-        rem.display, rem.due.isoformat(), when_phrase(rem.days_until), rem.repeat_note
-    )
+def _row(rem, late=False):
+    """One table row. The overdue table's column is How late, so it says just that."""
+    when = "{} days".format(abs(rem.days_until)) if late else when_phrase(rem.days_until)
+    return "| {} | {} | {} | {} |".format(rem.display, rem.due.isoformat(), when, rem.repeat_note)
 
 
 def render_agenda(reminders, problems, today, source):
@@ -266,7 +266,7 @@ def render_agenda(reminders, problems, today, source):
 
     if overdue:
         lines += ["## Overdue", "", "| What | Was due | How late | Repeats |", "| --- | --- | --- | --- |"]
-        lines += [_row(rem) for rem in overdue]
+        lines += [_row(rem, late=True) for rem in overdue]
         lines.append("")
 
     lines += ["## Next 45 days", "", "| What | Due | When | Repeats |", "| --- | --- | --- | --- |"]
