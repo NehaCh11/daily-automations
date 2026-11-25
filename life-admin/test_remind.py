@@ -217,6 +217,42 @@ class Rendering(unittest.TestCase):
         self.assertEqual(remind.when_phrase(-4), "overdue by 4 days")
 
 
+class StatePruning(unittest.TestCase):
+    """What the state file forgets, and what it must not forget."""
+
+    def save_and_reload(self, announced, today, live_keys):
+        with tempfile.TemporaryDirectory() as folder:
+            original = remind.STATE_PATH
+            remind.STATE_PATH = Path(folder) / "notified.json"
+            try:
+                remind.save_state({"announced": dict(announced), "last_run": None}, today, live_keys)
+                return json.loads(remind.STATE_PATH.read_text(encoding="utf-8"))
+            finally:
+                remind.STATE_PATH = original
+
+    def test_a_long_overdue_item_still_on_the_list_keeps_its_state(self):
+        # 692 days past, well outside the prune window, but still being tracked.
+        # Forgetting it was announced would announce it again on every run.
+        key = "passport-expires@2025-01-02"
+        saved = self.save_and_reload({key: [30, -30]}, date(2026, 11, 25), [key])
+        self.assertIn(key, saved["announced"])
+        self.assertEqual(saved["announced"][key], [30, -30])
+
+    def test_an_occurrence_no_longer_on_the_list_is_pruned_once_it_is_old(self):
+        saved = self.save_and_reload({"deleted-thing@2024-01-01": [0]}, date(2026, 11, 25), [])
+        self.assertEqual(saved["announced"], {})
+
+    def test_a_recent_occurrence_survives_even_once_it_leaves_the_list(self):
+        # Last month's rent, say: the entry has rolled on to a new occurrence.
+        key = "rent@2026-11-01"
+        saved = self.save_and_reload({key: [0]}, date(2026, 11, 25), [])
+        self.assertIn(key, saved["announced"])
+
+    def test_an_unparseable_key_is_kept_rather_than_quietly_dropped(self):
+        saved = self.save_and_reload({"weird-key-no-date": [0]}, date(2026, 11, 25), [])
+        self.assertIn("weird-key-no-date", saved["announced"])
+
+
 class ConfigSources(unittest.TestCase):
     """Where the list comes from, which is how real dates stay out of the repo."""
 

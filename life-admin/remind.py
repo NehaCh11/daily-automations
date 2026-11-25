@@ -91,17 +91,24 @@ def load_state():
     return state
 
 
-def save_state(state, today):
-    """Write state, dropping occurrences long past so the file stays readable."""
+def save_state(state, today, live_keys=()):
+    """Write state, dropping occurrences long past so the file stays readable.
+
+    Anything still on the list is kept whatever its date. An item that went
+    overdue more than KEEP_STATE_DAYS ago is still being tracked, and forgetting
+    that it was announced would announce it again on every single run.
+    """
     cutoff = today - timedelta(days=KEEP_STATE_DAYS)
+    live = set(live_keys)
     pruned = {}
     for key, steps in state["announced"].items():
-        due = key.rsplit("@", 1)[-1]
-        try:
-            if date.fromisoformat(due) < cutoff:
-                continue
-        except ValueError:
-            pass
+        if key not in live:
+            due = key.rsplit("@", 1)[-1]
+            try:
+                if date.fromisoformat(due) < cutoff:
+                    continue
+            except ValueError:
+                pass
         pruned[key] = sorted(set(steps), reverse=True)
     state["announced"] = dict(sorted(pruned.items()))
     state["last_run"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -440,7 +447,7 @@ def main(argv=None):
     elif announcements and not args.no_issues:
         print("  no GITHUB_TOKEN/GITHUB_REPOSITORY, so no issues opened; the agenda has it all")
 
-    save_state(state, today)
+    save_state(state, today, [rem.key for rem in reminders])
 
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
